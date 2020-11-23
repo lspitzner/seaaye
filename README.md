@@ -47,17 +47,15 @@ This **assumes** you have a **working nix setup** and have the
 
 The rough idea is this:
 
-1. Place a copy of this repository in `nix/seaaye` (relative to `$MYPROJECT`
-   root directory, wherever that may be. The one that contains your
-   `foo.cabal`, `stack.yaml`, `package.yaml` files)
-2. Create `nix/package-setup.nix` file with appropriate contents.
-   See the example included in this repository at `doc/package-setup.nix`
-3. (optional) Create `stack-x-x.yaml` files for the desired GHC versions
-   to be tested
-4. Run `make -f nix/seaaye/Makefile ci`
-
-(But we should probably provide another wrapper script that encapsulates this
-as well..)
+1. Copy the `doc/package-setup.nix` file to the `./nix/package-setup.nix`
+   location of your haskell project directory.
+2. Copy the `doc/toplevel-script.sh` file over to `./build.sh` in your project.
+3. Run
+    - `./build.sh ci` to build/test all configurations
+    - `./build.sh shell` to enter a dev shell for your default configuration
+    - `./build.sh shell-stackage-8.8` to enter a dev shell that has package
+      resolved via stackage (but still using cabal as the tool inside that
+      shell)
 
 To uninstall, well
 
@@ -73,6 +71,9 @@ To uninstall, well
 (or aim to support)
 
 - hpack-based projects. It expects a cabal-file
+- Actually using stack inside the dev nix-shell. Well, maybe you can get this
+  to work somehow, but you won't benefit from caching library dependencies.
+  You might be able to use the GHC provided via nix. Maybe.
 - Arbitrary/custom GHC versions (pre-releases etc.) - unless haskell-nix starts
   supporting those
 - Wait, let me generalize that: No GHC versions other than the ones that
