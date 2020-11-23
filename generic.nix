@@ -72,7 +72,8 @@ let
         (t: {
           "${t.name}" = import ./via-hackage.nix (args // {
             inherit package-name module-flags;
-            inherit (t) ghc-ver index-state configureArgs;
+            inherit (t) ghc-ver index-state;
+            configureArgs = if t ? configureArgs then t.configureArgs else "";
             pkgsPath = ../materialized + "/${t.name}" + /default.nix;
           });
         })
