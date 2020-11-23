@@ -78,3 +78,8 @@ clean-materialized:
 .PHONY: clean-nix-gc
 clean-nix-gc:
 	rm -r -- nix/gcroots
+
+stack-%.yaml:
+	@echo "The operation requires the existence of $@ but it does not exist!"
+	@echo "Please set it up and retry."
+	@exit 1
