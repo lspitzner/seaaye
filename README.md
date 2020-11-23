@@ -50,8 +50,8 @@ The rough idea is this:
 1. Place a copy of this repository in `nix/seaaye` (relative to `$MYPROJECT`
    root directory, wherever that may be. The one that contains your
    `foo.cabal`, `stack.yaml`, `package.yaml` files)
-2. Create `nix/package-setup.nix` file with appropriate contents
-   (TODO document "appropriate")
+2. Create `nix/package-setup.nix` file with appropriate contents.
+   See the example included in this repository at `doc/package-setup.nix`
 3. (optional) Create `stack-x-x.yaml` files for the desired GHC versions
    to be tested
 4. Run `make -f nix/seaaye/Makefile ci`
