@@ -10,7 +10,7 @@
 # `./build shell-hackage-8-4` to enter a specific configuration's shell
 
 
-SEAAYE_VERSION=9170bdd99f93d2a088d1dc3edc3b78f198f0785c
+SEAAYE_VERSION=c183de0b0cceadffd060d8a221f694816910e9c2
 SEAAYE_SOURCE="https://github.com/lspitzner/seaaye/archive/$SEAAYE_VERSION.tar.gz"
 SEAAYE_STORE=$(nix-instantiate --expr "builtins.fetchTarball $SEAAYE_SOURCE" --eval --json | jq -r)
 nix-store -r "$SEAAYE_STORE" --indirect --add-root nix/seaaye >/dev/null
