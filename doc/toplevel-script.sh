@@ -9,6 +9,7 @@
 # `./build ci` to build/test all configurations
 # `./build shell-hackage-8-4` to enter a specific configuration's shell
 
+set -e
 
 SEAAYE_VERSION=c183de0b0cceadffd060d8a221f694816910e9c2
 SEAAYE_SOURCE="https://github.com/lspitzner/seaaye/archive/$SEAAYE_VERSION.tar.gz"
