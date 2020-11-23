@@ -2,6 +2,7 @@
 # I am not sure this even is more efficient.
 # package-vars := $(shell nix-instantiate --eval nix/seaaye/package-vars.nix -A "package-name" --strict --json)
 package-name              := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "package-name" --strict --json | jq -r)
+default-resolver          := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "default-resolver" --strict --json | jq -r)
 all-version-strings       := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-version-strings" --strict --json | jq -c ".[]")
 all-materialization-paths := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-materialization-paths" --strict | jq -r)
 all-env-paths             := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-env-paths" --strict | jq -r)
@@ -28,6 +29,9 @@ shell-hackage-%: nix/gcroots/hackage-%-shell nix/gcroots/nix-tools-shell
 .PHONY: shell-stackage-%
 shell-stackage-%: nix/gcroots/stackage-%-shell nix/gcroots/nix-tools-shell
 	nix-shell nix/gcroots/stackage-$*-shell
+
+.PHONY: shell
+shell: shell-$(default-resolver)
 
 nix/materialized/hackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
 	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' --indirect --add-root nix/gcroots/materialized-hackage-$*

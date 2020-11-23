@@ -13,6 +13,7 @@ in
 , targets
 , nix-root-ghcs
 , module-flags
+, default-resolver
 , ...
 }:
 let
@@ -97,7 +98,7 @@ versions // rec {
   inherit nixpkgs;
   inherit ghcid;
   inherit cabal-install;
-  default = versions."stackage-8-8";
+  default = versions.${default-resolver};
   nix-tools-shell = nixpkgs.haskellPackages.shellFor {
     packages = _: [];
     buildInputs = [
