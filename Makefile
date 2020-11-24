@@ -18,6 +18,7 @@ all-manual-materializations: $(all-materialization-paths)
 .PHONY: all-envs
 all-envs: nix/materialized/cleaned-source.nix $(all-env-paths)
 
+.PRECIOUS: nix/gcroots/%-envs
 nix/gcroots/%-envs: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
 	rm nix/gcroots/$*-envs*
 	nix-build -o "nix/gcroots/$*-envs" nix/seaaye/package-instance.nix -Q -A "\"$*\".allComponentEnvs"
@@ -28,15 +29,18 @@ shell-hackage-%: nix/gcroots/hackage-%-shell nix/gcroots/nix-tools-shell
 
 .PHONY: shell-stackage-%
 shell-stackage-%: nix/gcroots/stackage-%-shell nix/gcroots/nix-tools-shell
+	ls -la nix/gcroots/stackage-$*-shell
 	nix-shell nix/gcroots/stackage-$*-shell
 
 .PHONY: shell
 shell: shell-$(default-resolver)
 
+.PRECIOUS: nix/materialized/hackage-%
 nix/materialized/hackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
 	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' --indirect --add-root nix/gcroots/materialized-hackage-$*
 	nix-build nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' -o nix/materialized/hackage-$*
 	touch nix/materialized/hackage-$*
+.PRECIOUS: nix/materialized/stackage-%
 nix/materialized/stackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal stack-%.yaml nix/gcroots/nix-tools-shell
 	GHCRTS= nix-shell nix/seaaye/package-instance.nix -Q -A 'nix-tools-shell' --run "stack-to-nix -o nix/materialized/stackage-$* --stack-yaml stack-$*.yaml"
 	touch nix/materialized/stackage-$*
@@ -48,21 +52,26 @@ nix/materialized/cleaned-source.nix:
 	echo '/. + $(CLEANEDSOURCE)' > nix/materialized/cleaned-source.nix
 
 
+.PRECIOUS: nix/gcroots/hackage-%-shell
 nix/gcroots/hackage-%-shell: nix/materialized/hackage-%
 	nix-instantiate nix/seaaye/package-instance.nix -A 'hackage-$*.shell' --indirect --add-root nix/gcroots/hackage-$*-shell
 	touch nix/gcroots/hackage-$*-shell
+.PRECIOUS: nix/gcroots/stackage-%-shell
 nix/gcroots/stackage-%-shell: nix/materialized/stackage-%
 	nix-instantiate nix/seaaye/package-instance.nix -A 'stackage-$*.shell' --indirect --add-root nix/gcroots/stackage-$*-shell
 	touch nix/gcroots/stackage-$*-shell
 
+.PRECIOUS: nix/gcroots/hackage-%-hsPkgs
 nix/gcroots/hackage-%-hsPkgs: nix/materialized/hackage-%
 	nix-instantiate nix/seaaye/package-instance.nix -A 'hackage-$*.hsPkgs' --indirect --add-root nix/gcroots/hackage-$*-hsPkgs
 	touch nix/gcroots/hackage-$*-hsPkgs
+.PRECIOUS: nix/gcroots/stackage-%-hsPkgs
 nix/gcroots/stackage-%-hsPkgs: nix/materialized/stackage-%
 	# nix-instantiate nix/seaaye/package-instance.nix -A 'stackage-$*.hsPkgs' --indirect --add-root nix/gcroots/stackage-$*-hsPkgs
 	nix-build nix/seaaye/package-instance.nix -A 'stackage-$*.hsPkgs' -o nix/gcroots/stackage-$*-hsPkgs
 	touch nix/gcroots/stackage-$*-hsPkgs
 
+.PRECIOUS: nix/gcroots/nix-tools-shell
 nix/gcroots/nix-tools-shell: nix/seaaye/*.nix
 	nix-instantiate nix/seaaye/package-instance.nix -A 'nix-tools-shell' --indirect --add-root nix/gcroots/nix-tools-shell
 	nix-instantiate nix/seaaye/package-instance.nix -A "haskellNixSrc" --eval | sed "s/\"//g" | xargs nix-store --indirect --add-root nix/gcroots/haskellNixSrc -r
