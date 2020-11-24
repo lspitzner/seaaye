@@ -11,7 +11,6 @@ in
 { package-name
 , nixpkgs ? nixpkgsLocal
 , targets
-, nix-root-ghcs
 , module-flags
 , default-resolver
 , ...
@@ -63,6 +62,14 @@ let
   };
   inherit (builtins) hasAttr;
   concatAttrs = attrList: nixpkgs.lib.fold (x: y: x // y) {} attrList;
+  nix-root-ghcs =
+    builtins.attrNames
+      (nixpkgs.lib.attrsets.genAttrs
+        (builtins.map
+          (t: t.ghc-ver)
+          (targets.hackage ++ targets.stackage))
+        (_: true));
+
 in
 assert nixpkgs.lib.assertMsg (hasAttr "haskell-nix" nixpkgs) "need iohk haskell-nix overlay!";
 let

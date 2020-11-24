@@ -41,7 +41,6 @@
       }
     ];
   };
-  nix-root-ghcs = [ "ghc844" "ghc865" "ghc883" "ghc8101" ];
   module-flags = [
     { packages.my-package.flags.my-package-examples-examples = true; }
   ];

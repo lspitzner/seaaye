@@ -10,5 +10,4 @@ in setup // rec {
   all-env-paths =
     builtins.toString
       (builtins.map (n: "nix/gcroots/" + n + "-envs") all-version-strings);
-
 }
