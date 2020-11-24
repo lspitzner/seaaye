@@ -72,7 +72,8 @@ nix/gcroots/stackage-%-hsPkgs: nix/materialized/stackage-%
 	touch nix/gcroots/stackage-$*-hsPkgs
 
 .PRECIOUS: nix/gcroots/nix-tools-shell
-nix/gcroots/nix-tools-shell: nix/seaaye/*.nix
+nix/gcroots/nix-tools-shell: nix/*.nix nix/seaaye/*.nix
+	nix-build nix/seaaye/package-instance.nix -Q -A "roots" -o nix/gcroots/haskell-nix-roots
 	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'nix-tools-shell' --indirect --add-root nix/gcroots/nix-tools-shell
 	nix-instantiate nix/seaaye/package-instance.nix -Q -A "haskellNixSrc" --eval | sed "s/\"//g" | xargs nix-store --indirect --add-root nix/gcroots/haskellNixSrc -r
 	nix-build nix/seaaye/package-instance.nix -Q -A "nixpkgsSrc" -o nix/gcroots/nixpkgsSrc
