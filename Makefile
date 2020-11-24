@@ -37,8 +37,8 @@ shell: shell-$(default-resolver)
 
 .PRECIOUS: nix/materialized/hackage-%
 nix/materialized/hackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
-	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' --indirect --add-root nix/gcroots/materialized-hackage-$*
-	nix-build nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' -o nix/materialized/hackage-$*
+	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' --indirect --add-root nix/gcroots/materialized-hackage-$*.drv
+	nix-build -Q nix/gcroots/materialized-hackage-$*.drv -o nix/materialized/hackage-$*
 	touch nix/materialized/hackage-$*
 .PRECIOUS: nix/materialized/stackage-%
 nix/materialized/stackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal stack-%.yaml nix/gcroots/nix-tools-shell
