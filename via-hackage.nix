@@ -37,6 +37,7 @@ in rec {
   ${package-name} = hsPkgs.${package-name};
   # inherit (hsPkgs) "${package-name}";  nix does not like this syntax :-(
   inherit (hsPkgs.${package-name}) checks;
+  check-names = builtins.attrNames (hsPkgs.${package-name}.components.tests);
   cabal-check = import ./cabal-check.nix
     { inherit nixpkgs; name = package-name; src = cleanedSource; };
   allComponents = nixpkgs.linkFarm
