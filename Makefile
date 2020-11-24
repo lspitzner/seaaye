@@ -73,12 +73,12 @@ nix/gcroots/stackage-%-hsPkgs: nix/materialized/stackage-%
 
 .PRECIOUS: nix/gcroots/nix-tools-shell
 nix/gcroots/nix-tools-shell: nix/seaaye/*.nix
-	nix-instantiate nix/seaaye/package-instance.nix -A 'nix-tools-shell' --indirect --add-root nix/gcroots/nix-tools-shell
-	nix-instantiate nix/seaaye/package-instance.nix -A "haskellNixSrc" --eval | sed "s/\"//g" | xargs nix-store --indirect --add-root nix/gcroots/haskellNixSrc -r
-	nix-build nix/seaaye/package-instance.nix -A "nixpkgsSrc" -o nix/gcroots/nixpkgsSrc
-	nix-build nix/seaaye/package-instance.nix -A "ghcid" -o nix/gcroots/ghcid
-	nix-build nix/seaaye/package-instance.nix -A "cabal-install" -o nix/gcroots/cabal-install
-	touch nix/gcroots/nix-tools-shell
+	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'nix-tools-shell' --indirect --add-root nix/gcroots/nix-tools-shell
+	nix-instantiate nix/seaaye/package-instance.nix -Q -A "haskellNixSrc" --eval | sed "s/\"//g" | xargs nix-store --indirect --add-root nix/gcroots/haskellNixSrc -r
+	nix-build nix/seaaye/package-instance.nix -Q -A "nixpkgsSrc" -o nix/gcroots/nixpkgsSrc
+	nix-build nix/seaaye/package-instance.nix -Q -A "ghcid" -o nix/gcroots/ghcid
+	nix-build nix/seaaye/package-instance.nix -Q -A "cabal-install" -o nix/gcroots/cabal-install
+	@touch nix/gcroots/nix-tools-shell
 
 .PHONY: clean-materialized
 clean-materialized:
