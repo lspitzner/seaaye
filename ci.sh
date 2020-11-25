@@ -16,7 +16,7 @@ function run-test {
   local TESTNAME=$(echo $2 | jq -r)
   nix-build -o "$OUTDIR/$ATTRPATH-$TESTNAME-test-result" -Q nix/seaaye/package-instance.nix -A "\"$ATTRPATH\".$PACKAGENAME.checks.\"$TESTNAME\""
   (($? == 0)) || { echo "$ATTRPATH: $TESTNAME: run test failed" >> "$SUMMARY"; return 1; }
-  echo "$ATTRPATH: $TESTNAME: $(grep examples "$OUTDIR/$ATTRPATH-$TESTNAME-test-result/test-stdout")" >> "$SUMMARY"
+  echo "$ATTRPATH: $TESTNAME: $(tail -n1 "$OUTDIR/$ATTRPATH-$TESTNAME-test-result/test-stdout")" >> "$SUMMARY"
 }
 
 function build-component {
