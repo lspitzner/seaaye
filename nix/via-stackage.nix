@@ -1,12 +1,13 @@
 { package-name
+, target-name
 , nixpkgs
 , cleanedSource
 , stackFile
-, pkgsPath
 , pkg-def-extras ? []
+, ghc-ver
 , module-flags
-, cabal-install
-, ghcid
+# , cabal-install
+# , ghcid
 }:
 let
   # package-nix = nixpkgs.haskell-nix.callStackToNix {
@@ -14,7 +15,12 @@ let
   #   src = cleanedSource;
   #   stackYaml = stackFile;
   # };
-  package-plan = import pkgsPath;
+  package-nix = nixpkgs.haskell-nix.callStackToNix {
+    name = package-name;
+    src = cleanedSource;
+    stackYaml = stackFile;
+  };
+  package-plan = nixpkgs.haskell-nix.importAndFilterProject package-nix;
   generatedCache = nixpkgs.haskell-nix.genStackCache {
     src = cleanedSource;
     stackYaml = stackFile;
@@ -24,25 +30,23 @@ let
     pkg-def-extras = pkg-def-extras;
     modules = [ (nixpkgs.haskell-nix.mkCacheModule generatedCache)
                 { packages.${package-name}.src = nixpkgs.haskell-nix.cleanSourceHaskell { src = cleanedSource; }; }
+                { packages.${package-name}.preCheck = ''
+                    # echo resolver-is-stackage
+                  ''; }
               ] ++ module-flags;
   }).config.hsPkgs;
 in rec {
-  inherit package-plan hsPkgs nixpkgs;
+  inherit package-nix package-plan hsPkgs nixpkgs;
   "${package-name}" = hsPkgs.${package-name};
   checks = hsPkgs.${package-name}.checks;
-  cabal-check = import ./cabal-check.nix
-    { inherit nixpkgs; name = package-name; src = cleanedSource; };
   allComponents = nixpkgs.linkFarm
     "allComponents"
     (builtins.map
       (x: { name = x.name; path = x; })
       (nixpkgs.haskell-nix.haskellLib.getAllComponents hsPkgs.${package-name}));
-  allComponentEnvs =
-    (builtins.map
-      (x: x.env)
-      (nixpkgs.haskell-nix.haskellLib.getAllComponents hsPkgs.${package-name}));
 
   shell = hsPkgs.shellFor {
+    name = "${package-name}-shell-for-${target-name}";
     # Include only the *local* packages of your project.
     packages = ps: [
       ps.${package-name}
@@ -60,14 +64,14 @@ in rec {
     # tools = { ghcid = "0.8.7"; cabal = "3.2.0.0"; };
     # See overlays/tools.nix for more details
 
+    tools = { ghcid = "0.8.7"; cabal = "3.4.0.0"; };
+
     # Some you may need to get some other way.
     # TODO probably should define these in generic.nix to pass them into
     # hackage+stackage paths.
     buildInputs = with nixpkgs.haskellPackages;
       [ bash
         nixpkgs.nix
-        ghcid
-        cabal-install
       ];
 
     # Prevents cabal from choosing alternate plans, so that

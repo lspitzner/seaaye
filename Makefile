@@ -1,95 +1,123 @@
-# could use this an access things via jq, e.g. | jq '."package-name"' but
-# I am not sure this even is more efficient.
-# package-vars := $(shell nix-instantiate --eval nix/seaaye/package-vars.nix -A "package-name" --strict --json)
-package-name              := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "package-name" --strict --json | jq -r)
-default-resolver          := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "default-resolver" --strict --json | jq -r)
-all-version-strings       := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-version-strings" --strict --json | jq -c ".[]")
-all-materialization-paths := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-materialization-paths" --strict | jq -r)
-all-env-paths             := $(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-vars.nix -A "all-env-paths" --strict | jq -r)
+JSON := '$(shell nix-instantiate --eval --strict --arg base-config "$$NIX_CONFIG" ./nix/seaaye/main.nix -A 'simplified-config' --json)'
+GITFILES := $(shell git ls-files | grep -v "^nix" | xargs ls -1 2>/dev/null)
+# CLEANED_SOURCE = $(shell nix-instantiate --read-write-mode --eval --arg base-config "$$NIX_CONFIG" \
+# 	  nix/seaaye/main.nix -A 'cleanedSource.outPath')
 
-.PHONY: ci
-ci: all-manual-materializations nix/materialized/cleaned-source.nix
-	# echo "should run ci here"
-	time env AllVersionStrings="$(all-version-strings)" PACKAGENAME="$(package-name)" nix/seaaye/ci.sh
 
-.PHONY: all-manual-materializations
-all-manual-materializations: $(all-materialization-paths)
+.PHONY: help
+help:
+	@nix/seaaye/scripts/print-help.sh
 
-.PHONY: all-envs
-all-envs: nix/materialized/cleaned-source.nix $(all-env-paths)
+.PHONY: clean
+clean:
+	rm -rf nix/seaaye-cache
 
-.PRECIOUS: nix/gcroots/%-envs
-nix/gcroots/%-envs: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
-	rm nix/gcroots/$*-envs*
-	nix-build -o "nix/gcroots/$*-envs" nix/seaaye/package-instance.nix -Q -A "\"$*\".allComponentEnvs"
+.PHONY: targets
+targets:
+	@nix-instantiate --read-write-mode --eval --arg base-config "$$NIX_CONFIG" \
+	  nix/seaaye/main.nix -A 'enabled-target-names'
 
-.PHONY: shell-hackage-%
-shell-hackage-%: nix/gcroots/hackage-%-shell nix/gcroots/nix-tools-shell
-	nix-shell nix/gcroots/hackage-$*-shell
-
-.PHONY: shell-stackage-%
-shell-stackage-%: nix/gcroots/stackage-%-shell nix/gcroots/nix-tools-shell
-	ls -la nix/gcroots/stackage-$*-shell
-	nix-shell nix/gcroots/stackage-$*-shell
+.PHONY: shells
+shells: nix/seaaye-cache/shell-drvs-marker
 
 .PHONY: shell
-shell: shell-$(default-resolver)
+shell:
+	$(eval DEFAULTTARGET=$(shell jq -r '."default-target"' <<< ${JSON}))
+	@+$(MAKE) -s -f $(SEAAYE_MAKEFILE)-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.marker
+	@nix-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.drv
 
-.PRECIOUS: nix/materialized/hackage-%
-nix/materialized/hackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal
-	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'hackage-$*.package-nix.projectNix' --indirect --add-root nix/gcroots/materialized-hackage-$*.drv
-	nix-build -Q nix/gcroots/materialized-hackage-$*.drv -o nix/materialized/hackage-$*
-	touch nix/materialized/hackage-$*
-.PRECIOUS: nix/materialized/stackage-%
-nix/materialized/stackage-%: nix/*.nix nix/seaaye/*.nix $(package-name).cabal stack-%.yaml nix/gcroots/nix-tools-shell
-	GHCRTS= nix-shell nix/seaaye/package-instance.nix -Q -A 'nix-tools-shell' --run "stack-to-nix -o nix/materialized/stackage-$* --stack-yaml stack-$*.yaml"
-	touch nix/materialized/stackage-$*
+.PHONY: shell-%
+shell-%: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix
+	@+$(MAKE) -s -f $(SEAAYE_MAKEFILE)-shell nix/seaaye-cache/shell-for-$*.marker
+	@nix-shell nix/seaaye-cache/shell-for-$*.drv
 
-.PHONY: nix/materialized/cleaned-source.nix
-nix/materialized/cleaned-source.nix:
-	rm nix/materialized/cleaned-source.nix || true
-	$(eval CLEANEDSOURCE=$(shell nix-instantiate --eval --read-write-mode nix/seaaye/package-instance.nix -A "cleanedSource.outPath"))
-	echo '/. + $(CLEANEDSOURCE)' > nix/materialized/cleaned-source.nix
+nix/seaaye-cache/shell-for-%.marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix
+	mkdir -p ./nix/seaaye-cache/
+#	$(eval GHCVER=$(shell echo ${JSON} | jq -r '.targets."$*"."ghc-ver"'))
+#	$(eval RESOLVER=$(shell echo ${JSON} | jq -r '.targets."$*"."resolver"'))
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+		--add-root ./nix/seaaye-cache/shell-for-$*.drv --indirect \
+		nix/seaaye/main.nix -A 'enabled-targets."$*".shell'
+	touch ./nix/seaaye-cache/shell-for-$*.marker
 
+nix/seaaye-cache/shell-drvs-marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix
+	mkdir -p ./nix/seaaye-cache/
+	cd ./nix/seaaye-cache && find -type l -name "shell*" -delete
+	cd ./nix/seaaye-cache && find -name "shell*.marker" -delete
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/seaaye-cache/shells --indirect \
+	  nix/seaaye/main.nix -A 'all-shells'
+	cd ./nix/seaaye-cache && \
+	  find -type l -name "shell*" | \
+	    xargs -t -I__ -- bash -c 'ln -s $$(readlink __) $$(readlink __ | sed "s/.*shell-for/shell-for/") && touch $$(readlink __ | sed -E "s|.*(shell-for.*).drv|\1.marker|")'
+	touch nix/seaaye-cache/shell-drvs-marker
 
-.PRECIOUS: nix/gcroots/hackage-%-shell
-nix/gcroots/hackage-%-shell: nix/materialized/hackage-%
-	nix-instantiate nix/seaaye/package-instance.nix -A 'hackage-$*.shell' --indirect --add-root nix/gcroots/hackage-$*-shell
-	touch nix/gcroots/hackage-$*-shell
-.PRECIOUS: nix/gcroots/stackage-%-shell
-nix/gcroots/stackage-%-shell: nix/materialized/stackage-%
-	nix-instantiate nix/seaaye/package-instance.nix -A 'stackage-$*.shell' --indirect --add-root nix/gcroots/stackage-$*-shell
-	touch nix/gcroots/stackage-$*-shell
+nix/seaaye-cache/cabal-check-drv-marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix $(GITFILES)
+	mkdir -p ./nix/seaaye-cache/
+	rm ./nix/seaaye-cache/cabal-check.drv || true
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/seaaye-cache/cabal-check.drv --indirect \
+	  nix/seaaye/main.nix -A 'cabal-check'
+	touch nix/seaaye-cache/cabal-check-drv-marker
 
-.PRECIOUS: nix/gcroots/hackage-%-hsPkgs
-nix/gcroots/hackage-%-hsPkgs: nix/materialized/hackage-%
-	nix-instantiate nix/seaaye/package-instance.nix -A 'hackage-$*.hsPkgs' --indirect --add-root nix/gcroots/hackage-$*-hsPkgs
-	touch nix/gcroots/hackage-$*-hsPkgs
-.PRECIOUS: nix/gcroots/stackage-%-hsPkgs
-nix/gcroots/stackage-%-hsPkgs: nix/materialized/stackage-%
-	# nix-instantiate nix/seaaye/package-instance.nix -A 'stackage-$*.hsPkgs' --indirect --add-root nix/gcroots/stackage-$*-hsPkgs
-	nix-build nix/seaaye/package-instance.nix -A 'stackage-$*.hsPkgs' -o nix/gcroots/stackage-$*-hsPkgs
-	touch nix/gcroots/stackage-$*-hsPkgs
+.PHONY: cabal-check
+cabal-check: nix/seaaye-cache/cabal-check-drv-marker
+	@nix-build nix/seaaye-cache/cabal-check.drv --no-out-link 1>/dev/null \
+	  && echo "cabal check: success" || echo "cabal check: failure"
 
-.PRECIOUS: nix/gcroots/nix-tools-shell
-nix/gcroots/nix-tools-shell: nix/*.nix nix/seaaye/*.nix
-	nix-build nix/seaaye/package-instance.nix -Q -A "roots" -o nix/gcroots/haskell-nix-roots
-	nix-instantiate nix/seaaye/package-instance.nix -Q -A 'nix-tools-shell' --indirect --add-root nix/gcroots/nix-tools-shell
-	nix-instantiate nix/seaaye/package-instance.nix -Q -A "haskellNixSrc" --eval | sed "s/\"//g" | xargs nix-store --indirect --add-root nix/gcroots/haskellNixSrc -r
-	nix-build nix/seaaye/package-instance.nix -Q -A "nixpkgsSrc" -o nix/gcroots/nixpkgsSrc
-	nix-build nix/seaaye/package-instance.nix -Q -A "ghcid" -o nix/gcroots/ghcid
-	nix-build nix/seaaye/package-instance.nix -Q -A "cabal-install" -o nix/gcroots/cabal-install
-	@touch nix/gcroots/nix-tools-shell
+nix/seaaye-cache/all-checks-marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix $(GITFILES)
+	@mkdir -p ./nix/seaaye-cache
+	@cd ./nix/seaaye-cache && find -type l -name "all-checks*" -delete
+	@cd ./nix/seaaye-cache && find -type l -name "check-*" -delete
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/seaaye-cache/all-checks --indirect \
+	  nix/seaaye/main.nix -A 'all-checks'
+	cd ./nix/seaaye-cache && \
+	  find -type l -name "all-checks*" | \
+	    xargs -rL1 ../seaaye/scripts/check-drv-renamer.sh
+	touch nix/seaaye-cache/all-checks-marker
 
-.PHONY: clean-materialized
-clean-materialized:
-	rm -r -- nix/materialized/
+.PHONY: ci
+ci: nix/seaaye-cache/all-checks-marker
+	@nix/seaaye/scripts/ci.sh
 
-.PHONY: clean-nix-gc
-clean-nix-gc:
-	rm -r -- nix/gcroots
+.PHONY: build-libs
+build-libs: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix $(GITFILES)
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/gcroots/all-lib-drv --indirect \
+	  nix/seaaye/main.nix -A 'all-libs'
 
-stack-%.yaml:
-	@echo "The operation requires the existence of $@ but it does not exist!"
-	@echo "Please set it up and retry."
-	@exit 1
+.PHONY: roots
+roots:
+	rm -r --\
+	  nix/gcroots/shell-drv*\
+	  nix/gcroots/shell-deps*\
+	  nix/gcroots/haskell-nix-root*\
+	  nix/gcroots/shell-out*\
+	  nix/gcroots/package-nix-drv*\
+	  || true
+
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/gcroots/shell-drv --indirect \
+	  nix/seaaye/main.nix -A 'all-shells'
+
+	nix-store -r $(shell nix-store --query --references nix/gcroots/shell-drv*) --add-root nix/gcroots/shell-deps/dep --indirect
+	nix-build nix/gcroots/shell-drv* -o nix/gcroots/shell-out
+
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/gcroots/haskell-nix-root-drv --indirect \
+	  nix/seaaye/main.nix -A 'haskell-nix-roots'
+	nix-build ./nix/gcroots/haskell-nix-root-drv* -o ./nix/gcroots/haskell-nix-root
+
+	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
+	  --add-root ./nix/gcroots/package-nix-drv --indirect \
+	  nix/seaaye/main.nix -A 'all-package-nixs'
+
+.PHONY: show-config-json
+show-config-json:
+	echo ${JSON} | jq '.'
+
+.PHONY: show-config
+show-config:
+	nix-instantiate --read-write-mode --eval --strict --arg base-config "$$NIX_CONFIG" \
+	  nix/seaaye/main.nix -A 'config'
