@@ -11,6 +11,11 @@ help:
 .PHONY: clean
 clean:
 	rm -rf nix/seaaye-cache
+	rm -rf nix/ci-out
+
+.PHONY: clean-all
+clean-all: clean
+	rm -rf nix/gcroots
 
 .PHONY: targets
 targets:

@@ -5,7 +5,8 @@ cat <<EOF
 # seaaye
 
 help             Print this document
-clean            Clean cached files
+clean            Clean cached files, ci-output
+clean-all        Clean cached files, ci-output and nix gc roots
 targets          Print available (configured+enabled) targets
 shell            Enter shell for default target
 shell-\$target    Enter shell for specified target
