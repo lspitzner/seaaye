@@ -47,24 +47,48 @@ This **assumes** you have a **working nix setup** and have the
 
 The rough idea is this:
 
-1. Copy the `doc/package-setup.nix` file to the `./nix/package-setup.nix`
-   location of your haskell project directory.
-2. Copy the `doc/toplevel-script.sh` file over to `./build.sh` in your project.
-3. Run
-    - `./build.sh ci` to build/test all configurations
-    - `./build.sh shell` to enter a dev shell for your default configuration
-    - `./build.sh shell-stackage-8.8` to enter a dev shell that has package
-      resolved via stackage (but still using cabal as the tool inside that
-      shell)
+1. Copy the `doc/toplevel-script.sh` file over to `./cimake` in your project.
+2. `chmod +x cimake` if necessary
+3. Edit `./cimake` and replace the obvious parts of the template with
+   your actual desired config (i.e. `package-name` should be your local
+   package name, you can specify which targets to build)
+4. Run
+    - `./cimake` to see an overview of available commands
+    - `./cimake ci` to build/test all configurations
+    - `./cimake shell` to enter a dev shell for your default configuration
+    - `./cimake roots` to capture nix garbage-collection roots so your
+      next `nix-collect-garbage` run does not delete everything
 
-To uninstall, well
+To uninstall,
 
-1. Delete the `nix/seaaye` folder
-2. Delete the `nix/materialized` and the `nix/gcroots` folders that contain
-   build caches and nix gc roots
-3. If desired, run `nix-collect-garbage`. If you are a nix user I assume you
-   know what this does. If not, well it should not break anything you care
-   about.
+1. Run `./cimake clean-all` (or delete `nix/seaaye`,`nix/seaaye-cache`,`nix/gcroots`,`nix/ci-out`)
+1. Delete the `./cimake` script
+3. If desired, run `nix-collect-garbage`.
+
+## How To Specify Resolvers
+
+Resolvers specify how dependency resolution works, i.e. what package versions
+are used for the dependencies of the local package. In the haskell ecosystem
+there are two approaches to this.
+
+1) Either we use the latest compatible versions (as determined by the version
+   bounds specified along the dependencies in the package meta-data) available
+   on hackage (this is what the `cabal` tool usually does) - we call this
+   resolver "hackage".
+   To make the above notion of "latest compatible versions" deterministic there
+   exists an argument "index-state" which is a timestamp.
+   Also, you can specify which version of ghc to use.
+
+2) Or we use a specific compatible set of package-versions as defined by the
+   stackage project. We call this resolver "stackage". For now, this requires
+   a `stack-something.yaml` file per stackage snapshot. Please refer to the
+   stack documentation for the contents of that file. And while the stackage
+   snapshot/resolver implies a specific ghc-version as well, you need to
+   specify it along side in the seaaye-target's target config so that the
+   appropriate ghc can be made available in the nix-shell for the stackage
+   target.
+
+The "template" `toplevel-script.sh` contains examples for both approaches.
 
 ## What This Does Not Support
 
@@ -77,7 +101,8 @@ To uninstall, well
 - Arbitrary/custom GHC versions (pre-releases etc.) - unless haskell-nix starts
   supporting those
 - Wait, let me generalize that: No GHC versions other than the ones that
-  haskell-nix supports. That is, currently: ghc-8.6, ghc-8.8 and ghc-8.10. And
-  ghc-8.4 if you are willing to wait for it to bootstrap (it is not cached).
+  haskell-nix supports. That is, currently: ghc-8.6, ghc-8.8, ghc-8.10 and
+  ghc-9.0 although 8.8 and 9.0 are _not_ cached (you will need to compile
+  ghc!)
 - multiple-package projects (might be possible to support in the future, but
   untested and highly unlikely to work out-of-the-box)
