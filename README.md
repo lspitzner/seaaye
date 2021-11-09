@@ -58,6 +58,14 @@ The rough idea is this:
     - `./cimake shell` to enter a dev shell for your default configuration
     - `./cimake roots` to capture nix garbage-collection roots so your
       next `nix-collect-garbage` run does not delete everything
+5. Modify your .gitignore to include the following:
+
+    ~~~~
+    /nix/seaaye
+    /nix/seaaye-cache
+    /nix/gcroots
+    /nix/ci-out
+    ~~~~
 
 To uninstall,
 
