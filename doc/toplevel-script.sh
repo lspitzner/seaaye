@@ -86,7 +86,7 @@ EOF
 SEAAYE_SOURCE="https://github.com/lspitzner/seaaye/archive/$SEAAYE_VERSION.tar.gz"
 SEAAYE_STORE=$(nix-instantiate --expr "builtins.fetchTarball $SEAAYE_SOURCE" --eval --json | jq -r)
 nix-store -r "$SEAAYE_STORE" --indirect --add-root nix/seaaye >/dev/null
-export SEAAYE_LOCAL_CONFIG_PATH=$(nix-instantiate --eval --strict -E "$NIX_CONFIG" -A local-config-path)
+export SEAAYE_LOCAL_CONFIG_PATH=$(nix-instantiate --eval --strict -E "$NIX_CONFIG" -A local-config-path 2>/dev/null)
 export SEAAYE_INVOKER_PATH="$0"
 export SEAAYE_MAKEFILE=$(realpath nix/seaaye/Makefile)
 
