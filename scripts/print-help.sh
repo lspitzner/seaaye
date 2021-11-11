@@ -15,4 +15,5 @@ cabal-check      Run cabal-check
 ci               Run all tests, including cabal check and all
                  test-suites of all enabled targets.
                  Print summary of results
+sdist            Generate the package sdist (as a nix derivation)
 EOF

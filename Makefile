@@ -126,3 +126,9 @@ show-config-json:
 show-config:
 	nix-instantiate --read-write-mode --eval --strict --arg base-config "$$NIX_CONFIG" \
 	  nix/seaaye/main.nix -A 'config'
+
+.PHONY: sdist
+sdist:
+	nix-build --arg base-config "$$NIX_CONFIG" \
+	  --no-out-link \
+	  nix/seaaye/main.nix -A 'sdist'

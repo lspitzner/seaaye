@@ -90,6 +90,21 @@ in rec {
   default-target = builtins.getAttr config.default-target enabled-targets;
   cabal-check = import ./nix/cabal-check.nix
     { inherit nixpkgs; name = config.package-name; src = cleanedSource; };
+  sdist = nixpkgs.stdenvNoCC.mkDerivation {
+    name = config.package-name + "-sdist";
+    src = cleanedSource;
+    buildInputs = [
+      nixpkgs.bash
+      nixpkgs.cabal-install # could use iohk's cabal-install, but it is slower
+                            # to instantiate and needs some ghc-ver. Could use
+                            # default-target's, but why is that even necessary?
+    ];
+    phases = [ "unpackPhase" "buildPhase" ];
+    buildPhase = ''
+      mkdir -p $out
+      cabal sdist -o $out
+    '';
+  };
   all-shells = builtins.mapAttrs
     (n: target:
       target.shell
