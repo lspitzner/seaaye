@@ -1,7 +1,9 @@
 #!/bin/bash
 
+SCRIPTPATH=$(dirname "$0")
 OUTDIR="nix/ci-out"
 SUMMARY="$OUTDIR/0-summary"
+FAILURE=0
 
 set -e
 
@@ -31,14 +33,27 @@ find "$OUTDIR" -name "hackage*" -delete
 rm -f "$OUTDIR/cabal-check.txt"
 
 echo "running cabal-check.."
-cabal-check
+cabal-check || FAILURE=1
 
 for F in $(find nix/seaaye-cache -name "check-*" | sort)
   do
     NAME=$(echo "$F" | sed -En 's|nix/seaaye-cache/check-.......-(.*)-[^-]*.drv|\1|p')
     echo "running $NAME .."
-    run-test $F $NAME
+    run-test $F $NAME || FAILURE=1
 done
 
 echo ""
 cat "$SUMMARY"
+
+"$SCRIPTPATH/pre-publish-checks.sh" || FAILURE=1
+
+if (($FAILURE == 0))
+  then
+    echo "SUCCESS!"
+    echo "path to sdist to upload:"
+    echo "$(nix-build -Q --no-out-link nix/seaaye-cache/sdist.drv)"/*
+  else
+    echo "some tests failed, not showing sdist path."
+fi
+
+echo ""
