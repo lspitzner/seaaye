@@ -17,6 +17,12 @@ case "$TARGET" in
     ln -sf "$TARGET" cabal-check.drv
     touch cabal-check-drv-marker
     ;;
+  *-sdist.drv)
+    ln -sf "$TARGET" sdist.drv
+    ;;
+  *-sdist-unpacked.drv)
+    ln -sf "$TARGET" sdist-unpacked.drv
+    ;;
   *)
     echo "I don't know what to do with $TARGET!"
     ;;

@@ -37,13 +37,15 @@ in rec {
   inherit (import <util.nix>) d;
   inherit config nixpkgs;
   # This should take all fields from the config that are serializable
-  simplified-config = {
-    inherit(config) package-name
-                    targets
-                    module-flags
-                    default-target;
-    local-extra-deps = "<lambda>";
-  } // (if config ? local-config-path then { inherit (config) local-config-path; } else {});
+  simplified-config = builtins.intersectAttrs {
+    package-name = true;
+    targets = true;
+    module-flags = true;
+    default-target = true;
+    local-config-path = true;
+    do-check-hackage = true;
+    do-check-changelog = true;
+  } config // { local-extra-deps = "<lambda>"; };
   cleanedSource = nixpkgs.lib.cleanSourceWith {
     name = config.package-name;
     src = ./../..;
@@ -90,6 +92,7 @@ in rec {
   default-target = builtins.getAttr config.default-target enabled-targets;
   cabal-check = import ./nix/cabal-check.nix
     { inherit nixpkgs; name = config.package-name; src = cleanedSource; };
+  cabal-file-path = sdist-unpacked + "/" + config.package-name + ".cabal";
   stack-yaml-paths = builtins.concatMap
     (c: if c ? stackFile
       then [(builtins.toPath (cleanedSource + "/" + c.stackFile))]
@@ -132,9 +135,10 @@ in rec {
   all-package-nixs = builtins.mapAttrs
     (n: target: target.package-nix.projectNix )
     enabled-targets;
-  all-checks = { inherit cabal-check; } // builtins.mapAttrs
+  all-checks = builtins.mapAttrs
     (n: target: target.checks )
-    enabled-targets;
+    enabled-targets
+    // { inherit cabal-check sdist sdist-unpacked; };
   all-libs = builtins.mapAttrs
     (n: target: target.${config.package-name}.components.library )
     enabled-targets;

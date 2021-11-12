@@ -73,6 +73,12 @@ export NIX_CONFIG=$(cat \
     { packages.my-package.flags.my-package-examples-examples = true; }
   ];
   default-target = "hackage-8-06";
+  ## Use the below lines to enable more checks.
+  ## - check whether the version needs a bump
+  ## - check whether there is a changelog entry for the to-be-released version
+  # do-check-hackage = "hackage.haskell.org";
+  # do-check-changelog = "ChangeLog.md";
+  ## Use the below option to override things not intended to be published
   # local-config-path = ./nix/local-config.nix;
 }
 EOF

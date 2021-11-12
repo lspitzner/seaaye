@@ -1,4 +1,6 @@
-JSON := '$(shell nix-instantiate --eval --strict --arg base-config "$$NIX_CONFIG" ./nix/seaaye/main.nix -A 'simplified-config' --json)'
+JSON := $(shell nix-instantiate --eval --strict --arg base-config "$$NIX_CONFIG" ./nix/seaaye/main.nix -A 'simplified-config' --json)
+SEAAYE_CONFIG_JSON := ${JSON}
+export SEAAYE_CONFIG_JSON
 GITFILES := $(shell git ls-files | grep -v "^nix" | xargs ls -1 2>/dev/null)
 # CLEANED_SOURCE = $(shell nix-instantiate --read-write-mode --eval --arg base-config "$$NIX_CONFIG" \
 # 	  nix/seaaye/main.nix -A 'cleanedSource.outPath')
@@ -27,7 +29,7 @@ shells: nix/seaaye-cache/shell-drvs-marker
 
 .PHONY: shell
 shell:
-	$(eval DEFAULTTARGET=$(shell jq -r '."default-target"' <<< ${JSON}))
+	$(eval DEFAULTTARGET=$(shell jq -r '."default-target"' <<< '${JSON}'))
 	@+$(MAKE) -s -f $(SEAAYE_MAKEFILE)-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.marker
 	@nix-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.drv
 
@@ -38,8 +40,8 @@ shell-%: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix
 
 nix/seaaye-cache/shell-for-%.marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) ./nix/seaaye/*.nix
 	mkdir -p ./nix/seaaye-cache/
-#	$(eval GHCVER=$(shell echo ${JSON} | jq -r '.targets."$*"."ghc-ver"'))
-#	$(eval RESOLVER=$(shell echo ${JSON} | jq -r '.targets."$*"."resolver"'))
+#	$(eval GHCVER=$(shell echo '${JSON}' | jq -r '.targets."$*"."ghc-ver"'))
+#	$(eval RESOLVER=$(shell echo '${JSON}' | jq -r '.targets."$*"."resolver"'))
 	nix-instantiate --read-write-mode --arg base-config "$$NIX_CONFIG" \
 		--add-root ./nix/seaaye-cache/shell-for-$*.drv --indirect \
 		nix/seaaye/main.nix -A 'enabled-targets."$*".shell'
@@ -120,7 +122,7 @@ roots:
 
 .PHONY: show-config-json
 show-config-json:
-	echo ${JSON} | jq '.'
+	echo '${JSON}' | jq '.'
 
 .PHONY: show-config
 show-config:
@@ -132,3 +134,7 @@ sdist:
 	@echo $(shell nix-build --arg base-config "$$NIX_CONFIG" \
 	  --no-out-link \
 	  nix/seaaye/main.nix -A 'sdist')/*
+
+.PHONY: pre-publish-checks
+pre-publish-checks: nix/seaaye-cache/all-checks-marker
+	@nix/seaaye/scripts/pre-publish-checks.sh || true
