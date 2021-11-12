@@ -11,16 +11,16 @@ function cabal-check {
   nix-build --no-out-link nix/seaaye-cache/cabal-check.drv \
     2> >(tee "$OUTDIR/cabal-check.txt" >&2) 1>/dev/null \
     || EXITCODE=$?
-  (($EXITCODE == 0)) || { echo "cabal-check: failed" >> "$SUMMARY"; return 1; }
-  echo "cabal-check: success" | tee -a "$SUMMARY"
+  (($EXITCODE == 0)) || { echo "! cabal-check: failed" >> "$SUMMARY"; return 1; }
+  echo "· cabal-check: success" | tee -a "$SUMMARY"
 }
 
 function run-test {
   local DRVPATH=$1
   local TESTNAME=$2
   nix-build -Q $DRVPATH -o "$OUTDIR/$TESTNAME-test-result" >/dev/null
-  (($? == 0)) || { echo "$TESTNAME: run test failed" >> "$SUMMARY"; return 1; }
-  echo "$TESTNAME: $(tail -n1 "$OUTDIR/$TESTNAME-test-result/test-stdout")" | tee -a "$SUMMARY"
+  (($? == 0)) || { echo "! $TESTNAME: run test failed" >> "$SUMMARY"; return 1; }
+  echo "· $TESTNAME: $(tail -n1 "$OUTDIR/$TESTNAME-test-result/test-stdout")" | tee -a "$SUMMARY"
 }
 
 mkdir -p "$OUTDIR"
