@@ -67,7 +67,7 @@ in rec {
       if target.resolver == "hackage" then
         import ./nix/via-hackage.nix {
           inherit nixpkgs;
-          inherit cleanedSource;
+          cleanedSource = sdist-unpacked;
           pkg-def-extras = localExtraDeps;
           inherit (config) package-name;
           target-name = n;
@@ -78,7 +78,7 @@ in rec {
       else if target.resolver == "stackage" then
         import ./nix/via-stackage.nix {
           inherit nixpkgs;
-          inherit cleanedSource;
+          cleanedSource = sdist-unpacked;
           inherit (config) package-name;
           target-name = n;
           inherit (target) ghc-ver stackFile;
@@ -90,6 +90,11 @@ in rec {
   default-target = builtins.getAttr config.default-target enabled-targets;
   cabal-check = import ./nix/cabal-check.nix
     { inherit nixpkgs; name = config.package-name; src = cleanedSource; };
+  stack-yaml-paths = builtins.concatMap
+    (c: if c ? stackFile
+      then [(builtins.toPath (cleanedSource + "/" + c.stackFile))]
+      else [])
+    (builtins.attrValues enabled-target-configs);
   sdist = nixpkgs.stdenvNoCC.mkDerivation {
     name = config.package-name + "-sdist";
     src = cleanedSource;
@@ -103,6 +108,20 @@ in rec {
     buildPhase = ''
       mkdir -p $out
       cabal sdist -o $out
+    '';
+  };
+  sdist-unpacked = nixpkgs.stdenvNoCC.mkDerivation {
+    name = config.package-name + "-sdist-unpacked";
+    src = cleanedSource;
+    buildInputs = [
+      nixpkgs.bash
+      nixpkgs.gnutar
+    ];
+    phases = [ "buildPhase" ];
+    buildPhase = ''
+      mkdir -p "$out"
+      tar -xz -f "${sdist}"/*.tar.gz --strip-components=1 -C "$out"
+      cp -t "$out" ${builtins.concatStringsSep " " stack-yaml-paths}
     '';
   };
   all-shells = builtins.mapAttrs
