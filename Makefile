@@ -129,6 +129,6 @@ show-config:
 
 .PHONY: sdist
 sdist:
-	nix-build --arg base-config "$$NIX_CONFIG" \
+	@echo $(shell nix-build --arg base-config "$$NIX_CONFIG" \
 	  --no-out-link \
-	  nix/seaaye/main.nix -A 'sdist'
+	  nix/seaaye/main.nix -A 'sdist')/*
