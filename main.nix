@@ -7,7 +7,7 @@ let
       then x.value
       else otherwise;
   haskellNixSrc = builtins.fetchTarball
-      https://github.com/input-output-hk/haskell.nix/archive/e6a0d20e06aa16134446468c3f3f59ea92eb745b.tar.gz;
+      https://github.com/input-output-hk/haskell.nix/archive/e3933cbb701e5bc61c18f620a4fd43c55f5c026e.tar.gz;
   haskellNix = import haskellNixSrc { version = 2; };
   nixpkgsSrc = haskellNix.sources.nixpkgs-2105;
   nixpkgsUser = tryImportOrElse <iohk-nixpkgs>
