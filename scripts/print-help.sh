@@ -10,6 +10,8 @@ clean-all          Clean cached files, ci-output and nix gc roots
 targets            Print available (configured+enabled) targets
 shell              Enter shell for default target
 shell-\$target      Enter shell for specified target
+shell-ghcXXX       Enter shell with the specified ghc version, no packages
+                   installed. Examples: ghc865, ghc884, ghc8104, ghc901, ghc921
 roots              Create nix garbage-collection roots
 cabal-check        Run cabal-check
 ci                 Run all tests, including cabal check and all

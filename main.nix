@@ -165,4 +165,11 @@ in rec {
     shell-1 = enabled-targets.hackage-8-06.shell;
     shell-2 = enabled-targets.hackage-8-10.shell;
   };
+  ghc-shell = builtins.mapAttrs
+    (n: thisghc:
+      nixpkgs.mkShell {
+        nativeBuildInputs = [ nixpkgs.bashInteractive thisghc ];
+      }
+    )
+    nixpkgs.haskell-nix.compiler;
 }

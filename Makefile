@@ -138,3 +138,7 @@ sdist:
 .PHONY: pre-publish-checks
 pre-publish-checks: nix/seaaye-cache/all-checks-marker
 	@nix/seaaye/scripts/pre-publish-checks.sh || true
+
+PHONY: shell-ghc%
+shell-ghc%:
+	nix-shell --arg base-config "$$NIX_CONFIG" nix/seaaye/main.nix -A 'ghc-shell.ghc$*'
