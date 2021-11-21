@@ -31,7 +31,7 @@ set -e
 ###############################
 # START OF PER-PROJECT SETTINGS
 ###############################
-SEAAYE_VERSION=25d6ed322afe27fcaccef24707079c5b369479ce
+SEAAYE_VERSION=4d1d2edf0c3da2969ad8397c5f5f2f96d6819b63
 export NIX_CONFIG=$(cat \
 <<EOF
 { package-name = "my-awesome-package";
