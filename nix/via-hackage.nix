@@ -67,7 +67,7 @@ in assert (!(package-plan ? configurationError)); rec {
 
     # Some you may need to get some other way.
     buildInputs = with nixpkgs.haskellPackages;
-      [ bash nixpkgs.nix ];
+      [ nixpkgs.bashInteractive nixpkgs.nix ];
 
     # Prevents cabal from choosing alternate plans, so that
     # *all* dependencies are provided by Nix.

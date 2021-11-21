@@ -70,7 +70,7 @@ in rec {
     # TODO probably should define these in generic.nix to pass them into
     # hackage+stackage paths.
     buildInputs = with nixpkgs.haskellPackages;
-      [ bash
+      [ nixpkgs.bashInteractive
         nixpkgs.nix
       ];
 
