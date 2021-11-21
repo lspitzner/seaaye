@@ -158,13 +158,6 @@ in rec {
                  (nixpkgs.haskell-nix.tool ghcver "cabal" "3.4.0.0")
                ])
       nix-root-ghcs;
-  meow = {
-    meow-cabal-check = default-target.checks.cabal-check;
-    # meow-tests = default-target.checks.tests;
-    meow-cabal-check-2 = enabled-targets.hackage-8-10.checks.tests;
-    shell-1 = enabled-targets.hackage-8-06.shell;
-    shell-2 = enabled-targets.hackage-8-10.shell;
-  };
   ghc-shell = builtins.mapAttrs
     (n: thisghc:
       nixpkgs.mkShell {
