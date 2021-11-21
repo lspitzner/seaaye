@@ -7,6 +7,26 @@ FAILURE=0
 PACKAGE_NAME=$(jq -r '.["package-name"]' <<< $SEAAYE_CONFIG_JSON)
 HACKAGE_CHECK_URL=$(jq -r '.["do-check-hackage"] // ""' <<< $SEAAYE_CONFIG_JSON)
 CHANGELOG_CHECK_PATH=$(jq -r '.["do-check-changelog"] // ""' <<< $SEAAYE_CONFIG_JSON)
+CABAL_PROJECT_LOCAL=$(jq -r '.["cabal-project-local"]' <<< $SEAAYE_CONFIG_JSON)
+SEAAYE_CONFIG_LOCAL=$(jq -r '.["local-config-path"]' <<< $SEAAYE_CONFIG_JSON)
+
+IS_LOCAL=0
+
+if [ "$CABAL_PROJECT_LOCAL" != "null" ]
+  then
+    echo "! local config us enabled (cabal-project-local), please disable."
+    IS_LOCAL=1
+fi
+if [ "$SEAAYE_CONFIG_LOCAL" != "null" ]
+  then
+    echo "! local config us enabled (local-config), please disable."
+    IS_LOCAL=1
+fi
+
+if (($IS_LOCAL))
+  then
+    exit 1
+fi
 
 CABAL_FILE_PATH=$(nix-instantiate --read-write-mode --eval --arg base-config "$NIX_CONFIG" -A "cabal-file-path" nix/seaaye/main.nix --json | jq -r)
 SDIST_UNPACKED=$(nix-build -Q --no-out-link nix/seaaye-cache/sdist-unpacked.drv)
