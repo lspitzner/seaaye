@@ -80,6 +80,11 @@ export NIX_CONFIG=$(cat \
   # do-check-changelog = "ChangeLog.md";
   ## Use the below option to override things not intended to be published
   # local-config-path = ./nix/local-config.nix;
+  ## Use the below to change cabal/hackage dependency-resolution by adding
+  ## an add-hoc cabal.project.local file with the specified contents.
+  ## This e.g. makes it possible to add "allow-newer: *:base" to test
+  ## stuff with a newly released ghc version.
+  # cabal-project-local = "allow-newer: *:base";
 }
 EOF
 )

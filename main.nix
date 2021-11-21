@@ -45,6 +45,7 @@ in rec {
     local-config-path = true;
     do-check-hackage = true;
     do-check-changelog = true;
+    cabal-project-local = true;
   } config // { local-extra-deps = "<lambda>"; };
   cleanedSource = nixpkgs.lib.cleanSourceWith {
     name = config.package-name;
@@ -125,6 +126,11 @@ in rec {
       mkdir -p "$out"
       tar -xz -f "${sdist}"/*.tar.gz --strip-components=1 -C "$out"
       cp -t "$out" ${builtins.concatStringsSep " " stack-yaml-paths}
+      ${let local = getConfigOrElse "cabal-project-local" "";
+        in if local == "" then "" else ''
+          echo -n "${local}" > "$out/cabal.project.local"
+        ''
+      }
     '';
   };
   all-shells = builtins.mapAttrs
