@@ -135,6 +135,12 @@ sdist:
 	  --no-out-link \
 	  nix/seaaye/main.nix -A 'sdist')/*
 
+.PHONY: sdist-unpacked
+sdist-unpacked:
+	@ls -l $(shell nix-build --arg base-config "$$NIX_CONFIG" \
+	  --no-out-link \
+	  nix/seaaye/main.nix -A 'sdist-unpacked')
+
 .PHONY: pre-publish-checks
 pre-publish-checks: nix/seaaye-cache/all-checks-marker
 	@nix/seaaye/scripts/pre-publish-checks.sh || true
