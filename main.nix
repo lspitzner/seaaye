@@ -94,11 +94,13 @@ in rec {
   cabal-check = import ./nix/cabal-check.nix
     { inherit nixpkgs; name = config.package-name; src = cleanedSource; };
   cabal-file-path = sdist-unpacked + "/" + config.package-name + ".cabal";
-  stack-yaml-paths = builtins.concatMap
-    (c: if c ? stackFile
-      then [(builtins.toPath (cleanedSource + "/" + c.stackFile))]
-      else [])
-    (builtins.attrValues enabled-target-configs);
+  # Using this is a bit more precise, but has the downside that sdist-unpacked
+  # changes when more targets get enabled (and more stack.yamls added).
+  # stack-yaml-paths = builtins.concatMap
+  #   (c: if c ? stackFile
+  #     then [(builtins.toPath (cleanedSource + "/" + c.stackFile))]
+  #     else [])
+  #   (builtins.attrValues enabled-target-configs);
   sdist = nixpkgs.stdenvNoCC.mkDerivation {
     name = config.package-name + "-sdist";
     src = cleanedSource;
@@ -125,7 +127,7 @@ in rec {
     buildPhase = ''
       mkdir -p "$out"
       tar -xz -f "${sdist}"/*.tar.gz --strip-components=1 -C "$out"
-      cp -t "$out" ${builtins.concatStringsSep " " stack-yaml-paths}
+      cp -t "$out" "$src"/stack*.yaml
       ${let local = getConfigOrElse "cabal-project-local" "";
         in if local == "" then "" else ''
           echo -n "${local}" > "$out/cabal.project.local"
