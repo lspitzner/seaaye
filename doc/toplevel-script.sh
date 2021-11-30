@@ -101,7 +101,6 @@ export SEAAYE_LOCAL_CONFIG_PATH=$(nix-instantiate --eval --strict -E "$NIX_CONFI
 export SEAAYE_INVOKER_PATH="$0"
 export SEAAYE_MAKEFILE=$(realpath nix/seaaye/Makefile)
 
-# make -f nix/seaaye/new-Makefile "$@"
 case "$@" in
   repl|nix-repl|"nix repl")
     nix repl --arg base-config "$NIX_CONFIG" nix/seaaye/main.nix
