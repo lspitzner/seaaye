@@ -56,7 +56,7 @@ if [ "$HACKAGE_CHECK_URL" ]
         echo "! $PACKAGE_NAME-$PACKAGE_VERSION is already present on hackage, needs Bump?!"
         FAILURE=1
       else
-        echo "- $PACKAGE_NAME-$PACKAGE_VERSION is not yet on hackage."
+        echo "· $PACKAGE_NAME-$PACKAGE_VERSION is not yet on hackage."
     fi
 fi
 
