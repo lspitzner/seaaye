@@ -5,6 +5,14 @@ GITFILES := $(shell git ls-files | grep -v "^nix" | xargs ls -1 2>/dev/null)
 # CLEANED_SOURCE = $(shell nix-instantiate --read-write-mode --eval --arg base-config "$$SEAAYE_CONFIG_NIX" --arg location "$$SEAAYE_LOCATION" \
 # 	  "$$SEAAYE_LIBDIR/main.nix" -A 'cleanedSource.outPath')
 
+ifeq (run,$(firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  RUN_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # ...and turn them into do-nothing targets
+  $(eval $(RUN_ARGS):dummy;@:)
+endif
+
+dummy:
 
 .PHONY: help
 help:
@@ -32,6 +40,12 @@ shell:
 	$(eval DEFAULTTARGET=$(shell jq -r '."default-target"' <<< '${JSON}'))
 	@+$(MAKE) -s -f $(SEAAYE_LIBDIR)/Makefile-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.marker
 	@nix-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.drv
+
+.PHONY: run
+run:
+	$(eval DEFAULTTARGET=$(shell jq -r '."default-target"' <<< '${JSON}'))
+	@+$(MAKE) -s -f $(SEAAYE_LIBDIR)/Makefile-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.marker
+	@nix-shell nix/seaaye-cache/shell-for-${DEFAULTTARGET}.drv --run "$(RUN_ARGS)"
 
 .PHONY: shell-%
 shell-%: $(SEAAYE_INVOKER_PATH) $(SEAAYE_CONFIG_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) $(SEAAYE_LIBDIR)/main.nix $(SEAAYE_LIBDIR)/nix/*.nix $(SEAAYE_LOCATION)/*.cabal

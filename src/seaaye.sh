@@ -33,6 +33,6 @@ case "$@" in
     nix repl --arg base-config "$SEAAYE_CONFIG_NIX" --arg location "$SEAAYE_LOCATION" "$SEAAYE_LIBDIR/main.nix"
     ;;
   *)
-    make -f "$SEAAYE_LIBDIR/Makefile" "$@"
+    make -f "$SEAAYE_LIBDIR/Makefile" -- "$@"
     ;;
 esac
