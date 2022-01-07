@@ -12,11 +12,11 @@ ifeq (run,$(firstword $(MAKECMDGOALS)))
   $(eval $(RUN_ARGS):dummy;@:)
 endif
 
-dummy:
-
 .PHONY: help
 help:
 	@"$$SEAAYE_LIBDIR/scripts/print-help.sh"
+
+dummy:
 
 .PHONY: clean
 clean:
