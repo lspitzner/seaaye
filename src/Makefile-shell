@@ -1,0 +1,7 @@
+
+nix/seaaye-cache/shell-for-%.marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) $(SEAAYE_LIBDIR)/main.nix $(SEAAYE_LIBDIR)/nix/*.nix $(SEAAYE_LOCATION)/*.cabal
+	mkdir -p ./nix/seaaye-cache/
+	nix-instantiate --read-write-mode --arg base-config "$$SEAAYE_CONFIG_NIX" --arg location "$$SEAAYE_LOCATION" \
+		--add-root ./nix/seaaye-cache/shell-for-$*.drv --indirect \
+		"$$SEAAYE_LIBDIR/main.nix" -A 'enabled-targets."$*".shell'
+	touch ./nix/seaaye-cache/shell-for-$*.marker

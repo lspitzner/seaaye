@@ -47,16 +47,16 @@ This **assumes** you have a **working nix setup** and have the
 
 The rough idea is this:
 
-1. Copy the `doc/toplevel-script.sh` file over to `./cimake` in your project.
-2. `chmod +x cimake` if necessary
-3. Edit `./cimake` and replace the obvious parts of the template with
-   your actual desired config (i.e. `package-name` should be your local
-   package name, you can specify which targets to build)
+1. Install the executable via `nix-env -i -f https://github.com/lspitzner/seaaye/archive/master.tar.gz`
+2. Copy `doc/example-seaaye.nix` file over to `./seaaye.nix` in your project.
+3. Edit `./seaaye.nix` and replace the obvious parts of the template with
+   your actual desired config, e.g. `package-name` should be your local
+   package name, you can specify which targets to build.
 4. Run
-    - `./cimake` to see an overview of available commands
-    - `./cimake ci` to build/test all configurations
-    - `./cimake shell` to enter a dev shell for your default configuration
-    - `./cimake roots` to capture nix garbage-collection roots so your
+    - `seaaye` to see an overview of available commands
+    - `seaaye ci` to build/test all configurations
+    - `seaaye shell` to enter a dev shell for your default configuration
+    - `seaaye roots` to capture nix garbage-collection roots so your
       next `nix-collect-garbage` run does not delete everything
 5. Modify your .gitignore to include the following:
 
@@ -69,8 +69,8 @@ The rough idea is this:
 
 To uninstall,
 
-1. Run `./cimake clean-all` (or delete `nix/seaaye`,`nix/seaaye-cache`,`nix/gcroots`,`nix/ci-out`)
-1. Delete the `./cimake` script
+1. Run `seaaye clean-all` (or delete `nix/seaaye`,`nix/seaaye-cache`,`nix/gcroots`,`nix/ci-out`)
+2. Delete the `seaaye` script from your nix env.
 3. If desired, run `nix-collect-garbage`.
 
 ## How To Specify Resolvers

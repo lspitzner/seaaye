@@ -14,7 +14,7 @@ let
     (importLocalOrElse (../iohk-nixpkgs.nix)
     (import nixpkgsSrc haskellNix.nixpkgsArgs));
 in
-{ base-config }:
+{ base-config, location }:
 let
   configLocal = if base-config ? local-config-path
     then importLocalOrElse (base-config.local-config-path) {}
@@ -33,11 +33,19 @@ let
   getConfigOrElse = k: default: if builtins.hasAttr k config
     then builtins.getAttr k config
     else default;
-in rec {
+in
+assert nixpkgs.lib.asserts.assertMsg
+  (config.seaaye-spec == 1)
+  ''
+    seaaye config spec version mismatch!
+    seaaye binary supports version 1, local config has ${toString config.seaaye-spec}.
+  '';
+rec {
   inherit (import <util.nix>) d;
   inherit config nixpkgs;
   # This should take all fields from the config that are serializable
   simplified-config = builtins.intersectAttrs {
+    seaaye-spec = true;
     package-name = true;
     targets = true;
     module-flags = true;
@@ -49,7 +57,7 @@ in rec {
   } config // { local-extra-deps = "<lambda>"; };
   cleanedSource = nixpkgs.lib.cleanSourceWith {
     name = config.package-name;
-    src = ./../..;
+    src = location;
     filter = p: t:
       let baseName = baseNameOf (toString p);
       in gitignoreFilter ./../.. p t
@@ -127,7 +135,7 @@ in rec {
     buildPhase = ''
       mkdir -p "$out"
       tar -xz -f "${sdist}"/*.tar.gz --strip-components=1 -C "$out"
-      cp -t "$out" "$src"/stack*.yaml
+      for f in "$src"/stack*.yaml; do cp "$f" "$out"; done
       ${let local = getConfigOrElse "cabal-project-local" "";
         in if local == "" then "" else ''
           echo -n "${local}" > "$out/cabal.project.local"
