@@ -149,6 +149,14 @@ sdist:
 	  --no-out-link \
 	  "$$SEAAYE_LIBDIR/main.nix" -A 'sdist')/*
 
+.PHONY: install
+install:
+	nix-env -i \
+	  --arg base-config "$$SEAAYE_CONFIG_NIX" \
+	  --arg location "$$SEAAYE_LOCATION" \
+	  -f "$$SEAAYE_LIBDIR/main.nix" \
+	  -A 'default-target.exes'
+
 .PHONY: sdist-unpacked
 sdist-unpacked:
 	@ls -l $(shell nix-build --arg base-config "$$SEAAYE_CONFIG_NIX" --arg location "$$SEAAYE_LOCATION" \
