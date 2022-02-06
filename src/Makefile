@@ -52,7 +52,7 @@ shell-%: $(SEAAYE_INVOKER_PATH) $(SEAAYE_CONFIG_PATH) $(SEAAYE_LOCAL_CONFIG_PATH
 	@+$(MAKE) -s -f $(SEAAYE_LIBDIR)/Makefile-shell nix/seaaye-cache/shell-for-$*.marker
 	@nix-shell nix/seaaye-cache/shell-for-$*.drv
 
-nix/seaaye-cache/shell-for-%.marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_CONFIG_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) $(SEAAYE_LIBDIR)/main.nix $(SEAAYE_LIBDIR)/nix/*.nix
+nix/seaaye-cache/shell-for-%.marker: $(SEAAYE_INVOKER_PATH) $(SEAAYE_CONFIG_PATH) $(SEAAYE_LOCAL_CONFIG_PATH) $(SEAAYE_LIBDIR)/main.nix $(SEAAYE_LIBDIR)/nix/*.nix $(SEAAYE_LOCATION)/*.cabal
 	mkdir -p ./nix/seaaye-cache/
 #	$(eval GHCVER=$(shell echo '${JSON}' | jq -r '.targets."$*"."ghc-ver"'))
 #	$(eval RESOLVER=$(shell echo '${JSON}' | jq -r '.targets."$*"."resolver"'))
