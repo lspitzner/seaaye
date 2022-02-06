@@ -1,4 +1,4 @@
-JSON := $(shell nix-instantiate --eval --strict --arg base-config "$$SEAAYE_CONFIG_NIX" --arg location "$$SEAAYE_LOCATION" "$$SEAAYE_LIBDIR/main.nix" -A 'simplified-config' --json)
+JSON := $(shell nix-instantiate --read-write-mode --eval --strict --arg base-config "$$SEAAYE_CONFIG_NIX" --arg location "$$SEAAYE_LOCATION" "$$SEAAYE_LIBDIR/main.nix" -A 'simplified-config' --json)
 SEAAYE_CONFIG_JSON := ${JSON}
 export SEAAYE_CONFIG_JSON
 GITFILES := $(shell git ls-files | grep -v "^nix" | xargs ls -1 2>/dev/null)
