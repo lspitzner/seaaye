@@ -1,3 +1,4 @@
+{ base-config, location }:
 let
   importLocalOrElse = maybePath: otherwise:
     if builtins.pathExists maybePath then import maybePath else otherwise;
@@ -6,16 +7,17 @@ let
     in if x.success
       then x.value
       else otherwise;
-  haskellNixSrc = builtins.fetchTarball
-      https://github.com/input-output-hk/haskell.nix/archive/e3933cbb701e5bc61c18f620a4fd43c55f5c026e.tar.gz;
+  haskellNixUrl = if builtins.hasAttr "haskell-nix-url" base-config
+    then base-config.haskell-nix-url
+    else https://github.com/input-output-hk/haskell.nix/archive/b9c58c1b1bd0206132150cd61b2ff09def2c4fcb.tar.gz;
+  haskellNixSrc = builtins.fetchTarball haskellNixUrl;
   haskellNix = import haskellNixSrc { version = 2; };
-  nixpkgsSrc = haskellNix.sources.nixpkgs-2105;
+  nixpkgsSrc = if builtins.hasAttr "haskell-nix-nixpkgs" base-config
+    then haskellNix.sources.${base-config.haskell-nix-nixpkgs}
+    else haskellNix.sources.nixpkgs-2105;
   nixpkgsUser = tryImportOrElse <iohk-nixpkgs>
     (importLocalOrElse (../iohk-nixpkgs.nix)
     (import nixpkgsSrc haskellNix.nixpkgsArgs));
-in
-{ base-config, location }:
-let
   configLocal = if base-config ? local-config-path
     then importLocalOrElse (base-config.local-config-path) {}
     else {};
@@ -43,9 +45,12 @@ assert nixpkgs.lib.asserts.assertMsg
 rec {
   inherit (import <util.nix>) d;
   inherit config nixpkgs;
+  haskell-nix-nixpkgs-options = builtins.attrNames haskellNix.sources;
   # This should take all fields from the config that are serializable
   simplified-config = builtins.intersectAttrs {
     seaaye-spec = true;
+    haskell-nix-url = true;
+    haskell-nix-nixpkgs = true;
     package-name = true;
     targets = true;
     module-flags = true;
