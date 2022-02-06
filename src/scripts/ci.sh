@@ -34,18 +34,18 @@ find "$OUTDIR" -name "stackage*" -delete
 find "$OUTDIR" -name "hackage*" -delete
 rm -f "$OUTDIR/cabal-check.txt"
 
-echo "running cabal-check.."
+echo "running cabal-check.." 1>&2
 cabal-check || FAILURE=1
 
 for F in $(find nix/seaaye-cache -name "check-*" | sort)
   do
     NAME=$(echo "$F" | sed -En 's|nix/seaaye-cache/check-.......-(.*)-[^-]*.drv|\1|p')
-    echo "running $NAME .."
+    echo "running $NAME .." 1>&2
     run-test "$F" "$NAME" || FAILURE=1
 done
 
-echo ""
-cat "$SUMMARY"
+echo "" 1>&2
+cat "$SUMMARY" 1>&2
 
 "$SEAAYE_LIBDIR/scripts/pre-publish-checks.sh" || FAILURE=1
 
