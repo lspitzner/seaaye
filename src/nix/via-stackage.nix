@@ -45,6 +45,10 @@ in rec {
       (x: { name = x.name; path = x; })
       (nixpkgs.haskell-nix.haskellLib.getAllComponents hsPkgs.${package-name}));
 
+  exes = hsPkgs.${package-name}.components.exes;
+  allExes = nixpkgs.symlinkJoin
+    { name = package-name; paths = builtins.attrValues exes; };
+
   shell = hsPkgs.shellFor {
     name = "${package-name}-shell-for-${target-name}";
     # Include only the *local* packages of your project.

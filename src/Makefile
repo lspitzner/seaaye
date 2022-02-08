@@ -155,7 +155,7 @@ install:
 	  --arg base-config "$$SEAAYE_CONFIG_NIX" \
 	  --arg location "$$SEAAYE_LOCATION" \
 	  -f "$$SEAAYE_LIBDIR/main.nix" \
-	  -A 'default-target.exes'
+	  -A 'default-target.allExes'
 
 .PHONY: dump-package-nix-expression
 dump-package-nix-expression:

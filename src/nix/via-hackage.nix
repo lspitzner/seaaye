@@ -47,6 +47,8 @@ in assert (!(package-plan ? configurationError)); rec {
       (nixpkgs.haskell-nix.haskellLib.getAllComponents hsPkgs.${package-name}));
 
   exes = hsPkgs.${package-name}.components.exes;
+  allExes = nixpkgs.symlinkJoin
+    { name = package-name; paths = builtins.attrValues exes; };
 
   shell = hsPkgs.shellFor {
     name = "${package-name}-shell-for-${target-name}";
